@@ -3,9 +3,24 @@ const router =express.Router()
 const jwt =require('jsonwebtoken');
 const bcrypt=require("bcrypt")
 const User=require("../MODELS/User")
+const nodemailer=require('nodemailer')
+require('dotenv').config();
 
 
 
+// define who is the owner for sending  otp for forgot password
+const transporter=nodemailer.createTransport({
+       service:"gmail",
+       auth:{
+        user:process.env.Email,
+        pass:process.env.Password
+       }
+})
+
+
+
+
+//  register
 router.post('/register', async (req,res)=>{
     try{
         const {userName,email,password}=req.body;
@@ -27,6 +42,9 @@ router.post('/register', async (req,res)=>{
     }
 })
 
+
+
+// login authenticate 
 router.post('/login', async (req,res)=>{
     try{
         const {email,password}=req.body;  //  destructure
@@ -57,6 +75,39 @@ router.post('/login', async (req,res)=>{
         res.status(500).json({
             message:err.message
         })
+    }
+})
+
+
+// send otp route
+router.post('/sendOTP',async(req,res)=>{
+    const {email}=req.body
+    const otp=Math.floor(100000+Math.random()*900000);
+    try{  // initialize message
+        const mailOptions={  
+            from:process.env.Email,
+            to:email,
+            subject:"OTP for verification",
+            text:`Your OTP for Verification is ${otp}`
+        }
+
+// send 
+     transporter.sendMail(mailOptions,async(err,info)=>{
+        if(err){
+            res.status(500).json({
+                message:err.message
+            })
+        }else{
+            res.json({
+                message:'OTP sent successfully'
+            })
+        }
+     })
+
+    }catch(error){
+      res.json({
+                message:'not working'
+            })
     }
 })
 
